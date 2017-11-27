@@ -33,10 +33,10 @@ class PaperView : FrameLayout {
     companion object {
         val TAG = "PaperView"
 
-        private val STATE_SMALL = 1
-        private val STATE_LARGE = 2
-        private val STATE_S_TO_L = 3
-        private val STATE_L_TO_S = 4
+        private val STATUS_SMALL = 1
+        private val STATUS_LARGE = 2
+        private val STATUS_S_TO_L = 3
+        private val STATUS_L_TO_S = 4
 
 
         private fun String.logD() {
@@ -60,10 +60,10 @@ class PaperView : FrameLayout {
 
     private var paint = Paint()
 
-    private var state = STATE_SMALL
+    private var status = STATUS_SMALL
 
     // 暂存拆分后的Bitmap
-    private var storeList: MutableList<BitmapStore>? = null
+    private var paperList: MutableList<PaperInfo>? = null
 
     private val divideMatrix = Matrix()
     private val divideCamera = Camera()
@@ -81,8 +81,6 @@ class PaperView : FrameLayout {
     private var flipScale = 0.2F
 
     private var childRequireHeight = -1F
-
-    private var backgroundBitmap: Bitmap? = null
 
     private var animating = false
 
@@ -141,28 +139,28 @@ class PaperView : FrameLayout {
         val smallChild = this.smallChild!!
         val largeChild = this.largeChild!!
         // 根据不同的状态计算需要的尺寸
-        when (state) {
-            STATE_SMALL -> {
+        when (status) {
+            STATUS_SMALL -> {
                 smallChild.visibility = VISIBLE
                 largeChild.visibility = GONE
 
                 setMeasuredDimension(myWidth, smallChild.measuredHeight + paddingTop + paddingBottom)
             }
-            STATE_S_TO_L -> {
+            STATUS_S_TO_L -> {
                 setMeasuredDimension(myWidth, smallChild.measuredHeight + paddingTop + paddingBottom)
                 animateLargeImpl()
 
                 smallChild.visibility = GONE
                 largeChild.visibility = GONE
             }
-            STATE_LARGE -> {
+            STATUS_LARGE -> {
                 smallChild.visibility = GONE
                 largeChild.visibility = View.VISIBLE
 
                 setMeasuredDimension(myWidth, largeChild.measuredHeight + paddingTop + paddingBottom)
             }
 
-            STATE_L_TO_S -> {
+            STATUS_L_TO_S -> {
                 setMeasuredDimension(myWidth, largeChild.measuredHeight + paddingTop + paddingBottom)
                 animateSmallImpl()
 
@@ -177,7 +175,7 @@ class PaperView : FrameLayout {
      * @param changed 内容是否发生变化
      */
     fun unfold(changed: Boolean = false) {
-        state = STATE_S_TO_L
+        status = STATUS_S_TO_L
         contentChanged = changed
         requestLayout()
     }
@@ -187,7 +185,7 @@ class PaperView : FrameLayout {
      * @param changed 内容是否发生变化
      */
     fun fold(changed: Boolean = false) {
-        state = STATE_L_TO_S
+        status = STATUS_L_TO_S
         contentChanged = changed
         requestLayout()
     }
@@ -195,12 +193,12 @@ class PaperView : FrameLayout {
     /**
      * 是否已经展开
      */
-    fun isUnfold() = state == STATE_LARGE
+    fun isUnfold() = status == STATUS_LARGE
 
     /**
      * 是否已经折叠
      */
-    fun isFold() = state == STATE_SMALL
+    fun isFold() = status == STATUS_SMALL
 
     /**
      * 设置展开和折叠监听器
@@ -224,25 +222,25 @@ class PaperView : FrameLayout {
     }
 
     override fun onDraw(canvas: Canvas) {
-        if (state == STATE_SMALL || state == STATE_LARGE) {
+        if (status == STATUS_SMALL || status == STATUS_LARGE) {
             return
         }
-        if (storeList == null)
+        if (paperList == null)
             return
         canvas.save()
         canvas.translate(paddingLeft.toFloat(), paddingTop.toFloat())
         childRequireHeight = 0F
-        storeList?.forEach {
+        paperList?.forEach {
             val itemHeight = flipBitmap(canvas, it)
             if (itemHeight > 0) {
                 childRequireHeight += itemHeight
             }
         }
-        requestLayout()
         canvas.restore()
+        requestLayout()
     }
 
-    private fun flipBitmap(canvas: Canvas, store: BitmapStore?): Float {
+    private fun flipBitmap(canvas: Canvas, store: PaperInfo?): Float {
         if (store == null || !store.visible)
             return 0F
 
@@ -296,26 +294,26 @@ class PaperView : FrameLayout {
     }
 
 
-    private fun getProperBitmap(store: BitmapStore): Bitmap {
+    private fun getProperBitmap(store: PaperInfo): Bitmap {
         val angle = store.angle
         if (isForeground(angle)) {
             // 根据角度计算要显示前面，但是由于前面有遮挡物
             // 这个遮挡物就是下一个折叠的背面
-            if (store.nextStore != null
-                    && store.nextStore!!.angle == angleStart) {
-                if (store.nextStore!!.bg.height < store.bg.height) {
+            if (store.next != null
+                    && store.next!!.angle == angleStart) {
+                if (store.next!!.bg.height < store.bg.height) {
                     return store.bg
                 } else {
-                    return store.nextStore!!.bg
+                    return store.next!!.bg
                 }
             } else {
                 return store.fg
             }
         } else {
             // 背部同理，可能有前一个折叠的背面遮挡
-            if (store.prevStore != null
-                    && store.prevStore!!.bg.height > store.bg.height) {
-                return store.prevStore!!.bg
+            if (store.prev != null
+                    && store.prev!!.bg.height > store.bg.height) {
+                return store.prev!!.bg
             } else {
                 return store.bg
             }
@@ -330,16 +328,16 @@ class PaperView : FrameLayout {
             animatorSet = null
         }
         animating = false
-        if (storeList == null
-                || storeList!!.isEmpty()
+        if (paperList == null
+                || paperList!!.isEmpty()
                 || contentChanged) {
             contentChanged = false
-            storeList?.clear()
-            storeList = getDividedBitmap(getSmallBitmap().reverseY(), getLargeBitmap())
+            paperList?.clear()
+            paperList = getDividedBitmap(getSmallBitmap().reverseY(), getLargeBitmap())
         }
     }
 
-    private fun animate(store: BitmapStore,
+    private fun animate(store: PaperInfo,
                         from: Float,
                         to: Float,
                         visibleOnEnd: Boolean,
@@ -378,8 +376,8 @@ class PaperView : FrameLayout {
         largeReset()
         val set = AnimatorSet()
         val list = ArrayList<Animator>()
-        val eachDuration = duration / storeList!!.size
-        storeList?.forEachIndexed {
+        val eachDuration = duration / paperList!!.size
+        paperList?.forEachIndexed {
             index, it ->
             // 第一个不做动画
             if (index != 0)
@@ -387,7 +385,7 @@ class PaperView : FrameLayout {
         }
         set.addListener(object : SimpleAnimatorListener() {
             override fun onAnimationEnd(animation: Animator?) {
-                state = STATE_LARGE
+                status = STATUS_LARGE
                 animating = false
                 requestLayout()
                 listener?.onUnfold()
@@ -405,17 +403,17 @@ class PaperView : FrameLayout {
         smallReset()
         val set = AnimatorSet()
         val list = ArrayList<Animator>()
-        val eachDuration = duration / storeList!!.size
+        val eachDuration = duration / paperList!!.size
         // 缩小动画是倒着执行的
-        for (index in (storeList!!.size - 1) downTo 0) {
-            val store = storeList!![index]
+        for (index in (paperList!!.size - 1) downTo 0) {
+            val store = paperList!![index]
             // 第一个不做动画
             if (index != 0)
                 list.add(animate(store, angleEnd, angleStart, false, eachDuration))
         }
         set.addListener(object : SimpleAnimatorListener() {
             override fun onAnimationEnd(animation: Animator?) {
-                state = STATE_SMALL
+                status = STATUS_SMALL
                 animating = false
                 requestLayout()
                 listener?.onFold()
@@ -427,22 +425,22 @@ class PaperView : FrameLayout {
 
 
     private fun largeReset() {
-        storeList?.forEach {
+        paperList?.forEach {
             nextStore ->
             nextStore.angle = angleStart
             nextStore.visible = false
         }
-        storeList?.first()?.visible = true
-        storeList?.first()?.angle = angleEnd
+        paperList?.first()?.visible = true
+        paperList?.first()?.angle = angleEnd
     }
 
     private fun smallReset() {
-        storeList?.forEach {
+        paperList?.forEach {
             nextStore ->
             nextStore.angle = angleEnd
             nextStore.visible = true
         }
-        storeList?.first()?.angle = angleEnd
+        paperList?.first()?.angle = angleEnd
     }
 
 
@@ -462,11 +460,11 @@ class PaperView : FrameLayout {
         return bitmap
     }
 
-    private fun getDividedBitmap(smallBitmap: Bitmap, largeBitmap: Bitmap): MutableList<BitmapStore> {
+    private fun getDividedBitmap(smallBitmap: Bitmap, largeBitmap: Bitmap): MutableList<PaperInfo> {
         val desireWidth = largeBitmap.width
         val desireHeight = largeBitmap.height
 
-        val list = ArrayList<BitmapStore>()
+        val list = ArrayList<PaperInfo>()
 
         val x = 0
         val divideItemWidth = smallBitmap.width
@@ -474,21 +472,18 @@ class PaperView : FrameLayout {
         var nextDividerItemHeight = divideItemHeight.toFloat()
         var divideYOffset = 0F
         val count = desireHeight / divideItemHeight + if (desireHeight % divideItemHeight == 0) 0 else 1
-        var prevStore: BitmapStore? = null
+        var prevStore: PaperInfo? = null
         for (i in 0..count - 1) {
             if (divideYOffset + nextDividerItemHeight > desireHeight) {
                 nextDividerItemHeight = desireHeight - divideYOffset
             }
             val fg = Bitmap.createBitmap(largeBitmap, x, divideYOffset.toInt(), divideItemWidth, nextDividerItemHeight.toInt())
             val bg = if (i == 1) smallBitmap else generateBackgroundBitmap(fg.width, fg.height)
-            val store = BitmapStore(false, x.toFloat(), divideYOffset, 180F, fg, bg, prevStore, null)
+            val store = PaperInfo(false, x.toFloat(), divideYOffset, 180F, fg, bg, prevStore, null)
             list.add(store)
-            prevStore?.nextStore = store
+            prevStore?.next = store
             prevStore = store
             divideYOffset += divideItemHeight
-        }
-        if (backgroundBitmap == null) {
-            backgroundBitmap = generateBackgroundBitmap(divideItemWidth, divideItemHeight)
         }
         return list
     }
@@ -503,14 +498,14 @@ class PaperView : FrameLayout {
     }
 
 
-    private data class BitmapStore(var visible: Boolean,
-                                   val x: Float,
-                                   var y: Float,
-                                   var angle: Float,
-                                   val fg: Bitmap,
-                                   val bg: Bitmap,
-                                   var prevStore: BitmapStore?,
-                                   var nextStore: BitmapStore?)
+    private data class PaperInfo(var visible: Boolean,
+                                 val x: Float,
+                                 var y: Float,
+                                 var angle: Float,
+                                 val fg: Bitmap,
+                                 val bg: Bitmap,
+                                 var prev: PaperInfo?,
+                                 var next: PaperInfo?)
 
 
     private open class SimpleAnimatorListener : Animator.AnimatorListener {
@@ -537,5 +532,18 @@ class PaperView : FrameLayout {
 
         fun onUnfold()
 
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        paperList?.clear()
+        animatorSet?.end()
+
+        paperList = null
+        animatorSet = null
+        listener = null
+
+        smallChild = null
+        largeChild = null
     }
 }
