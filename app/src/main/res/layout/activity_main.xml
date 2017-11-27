@@ -45,8 +45,10 @@
         app:paper_bg_color="#fff"
         app:paper_duration="1000">
 
+        <!--展开的布局-->
         <include layout="@layout/item_large" />
 
+        <!--收起的布局-->
         <include layout="@layout/item_small" />
 
     </com.goyourfly.library.paper_view.PaperView>
