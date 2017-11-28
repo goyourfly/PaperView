@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.goyourfly.library.paper_view.PaperView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/paperView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp"
+    app:paper_bg_color="#fff"
+    app:paper_duration="1000">
+
+    <!--展开的布局-->
+    <include layout="@layout/item_large" />
+
+    <!--收起的布局-->
+    <include layout="@layout/item_small" />
+
+</com.goyourfly.library.paper_view.PaperView>

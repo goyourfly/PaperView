@@ -8,8 +8,10 @@
 
 ### Compile
 
+[ ![Download](https://api.bintray.com/packages/goyourfly/maven/PaperView/images/download.svg?version=1.0) ](https://bintray.com/goyourfly/maven/PaperView/1.0/link)
+
 ````java
-compile 'com.goyourfly:paperview:1.0'
+compile 'com.goyourfly:paperview:latestVersion'
 ````
 
 ### Usage
@@ -36,7 +38,7 @@ compile 'com.goyourfly:paperview:1.0'
 | paper\_duration | integer | 动画总时长 | 2000 |
 | paper\_bg\_color | color | 纸片背景色 | #FFF |
 
-##### 2.在代码中触发
+##### 2.在代码中设置
 
 ###### 2.1 展开和折叠
 ````java
