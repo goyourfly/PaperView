@@ -54,6 +54,7 @@ class PaperView : FrameLayout {
     constructor(context: Context, attributeSet: AttributeSet) : super(context, attributeSet) {
         initAttrs(attributeSet)
     }
+
     constructor(context: Context, attributeSet: AttributeSet, style: Int) : super(context, attributeSet, style) {
         initAttrs(attributeSet)
     }
@@ -172,20 +173,22 @@ class PaperView : FrameLayout {
 
     /**
      * 展开
+     * @param animator 是否执行动画
      * @param changed 内容是否发生变化
      */
-    fun unfold(changed: Boolean = false) {
-        status = STATUS_S_TO_L
+    fun unfold(animator: Boolean = true, changed: Boolean = false) {
+        status = if (animator) STATUS_S_TO_L else STATUS_LARGE
         contentChanged = changed
         requestLayout()
     }
 
     /**
      * 收起
+     * @param animator 是否执行动画
      * @param changed 内容是否发生变化
      */
-    fun fold(changed: Boolean = false) {
-        status = STATUS_L_TO_S
+    fun fold(animator: Boolean = true, changed: Boolean = false) {
+        status = if (animator) STATUS_L_TO_S else STATUS_SMALL
         contentChanged = changed
         requestLayout()
     }
