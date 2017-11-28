@@ -13,7 +13,7 @@
 
 ### Compile
 
-[ ![Download](https://api.bintray.com/packages/goyourfly/maven/PaperView/images/download.svg?version=1.0) ](https://bintray.com/goyourfly/maven/PaperView/1.0/link)
+[ ![Download](https://api.bintray.com/packages/goyourfly/maven/PaperView/images/download.svg) ](https://bintray.com/goyourfly/maven/PaperView/_latestVersion)
 
 ````java
 compile 'com.goyourfly:paperview:latestVersion'
