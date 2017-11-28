@@ -4,7 +4,12 @@
 
 ### Demo
 
+##### 1.在普通的布局中使用
+
 <img src="./screenshot/PaperView.gif" width="240"/>
+
+##### 2.在RecyclerView中使用
+<img src="./screenshot/RecyclerPaperView.gif" width="240"/>
 
 ### Compile
 
@@ -43,10 +48,10 @@ compile 'com.goyourfly:paperview:latestVersion'
 ###### 2.1 展开和折叠
 ````java
 // 折叠卡片
-paperView.fold(changed:Boolean)
+paperView.fold(animator:Boolean,changed:Boolean)
 
 // 展开卡片
-paperView.unfold(changed:Boolean)
+paperView.unfold(animator:Boolean,changed:Boolean)
 ````
 
 ###### 2.2 监听状态变化
